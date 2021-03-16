@@ -66,6 +66,7 @@ function startListening() {
 function closeActiveListener() {
     if (activeConnection) {
         writeUpdate(`Closing listener`)
+        activeConnection.close();
         activeConnection = null;
     }
 }
