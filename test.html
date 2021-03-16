@@ -1,0 +1,79 @@
+<head>
+    <title>Test Page</title>
+</head>
+
+<body>
+    <h1>Test Page</h1>
+
+    <h2>Set Value</h2>
+    <input id="updateID" type="number", placeholder="ID">
+    <input id="updateValue" type="number", placeholder="Value">
+    <button onclick="update()">Update</button>
+
+    <h2>Manage Connection</h2>
+    <input id="listeningID" type="number" placeholder="ID">
+    <button onclick="startListening()">Start listening</button>
+    <button onclick="closeActiveListener()">Close</button>
+
+    <h2>Updates</h2>
+    <div id="updateContainer">
+        <!-- Here come the updates -->
+    </div>
+</body>
+
+
+<script>
+let activeConnection = null;
+const updateID = document.querySelector('#updateID');
+const updateValue = document.querySelector('#updateValue');
+const listeningInput = document.querySelector('#listeningID');
+const updateContainer = document.querySelector('#updateContainer');
+
+function update() {
+    const id = updateID.value;
+    updateID.value = null;
+    const value = updateValue.value;
+    updateValue.value = null;
+
+    fetch(`http://localhost:3000/update/${id}`, {
+        method: 'POST',
+        body: `${value}`,
+        headers: {
+            'Content-Type': 'text/plain; charset=UTF-8',
+        },
+    });
+}
+
+function startListening() {
+    closeActiveListener();
+
+    const id = listeningInput.value;
+    listeningInput.value = null;
+
+    writeUpdate(`Listening on ID=${id}`)
+
+    activeConnection = new EventSource(`http://localhost:3000/follow/${id}`);
+    activeConnection.onmessage = event => {
+        writeUpdate(`Got value=${event.data}`)
+    };
+    activeConnection.onerror = event => {
+        writeUpdate(`Errored`)
+        console.log('Errored', event);
+        activeConnection = null;
+    };
+}
+
+function closeActiveListener() {
+    if (activeConnection) {
+        writeUpdate(`Closing listener`)
+        activeConnection = null;
+    }
+}
+
+function writeUpdate(message) {
+    const li = document.createElement('li');
+    li.textContent = message;
+    updateContainer.appendChild(li);
+
+}
+</script>
